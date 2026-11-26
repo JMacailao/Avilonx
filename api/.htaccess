@@ -1,0 +1,4 @@
+# Settings and server code are never served as files.
+<FilesMatch "^(config|config\.sample)\.php$">
+  Require all denied
+</FilesMatch>
