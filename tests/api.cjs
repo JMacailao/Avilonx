@@ -138,6 +138,40 @@ function client() {
   check((await admin.rpc('account_set_email', { p_email: 'ana@example.com' })).error?.message.includes('already used'), 'same email on another account refused');
   check((await visitor.call('functions/avilonx-password-reset', { action: 'reset', username: 'ana' })).error?.code === 'NOT_SET_UP', 'reset email: not set up without a Resend key');
 
+  // Landing page (Supabase-style address, raw answers), club requests, errors.
+  const raw = async (name, args = {}, c = visitor) => (await fetch(`${BASE}/api/index.php?r=/rest/v1/rpc/${name}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(args) })).json();
+  const today = await raw('public_races_today');
+  // "Today" is the Philippine date: the Derby (released 3 hours ago) counts only if that is still today there.
+  const phDate = t => new Date(new Date(t).getTime() + 8 * 3600e3).toISOString().slice(0, 10);
+  const derbyToday = phDate(release) === phDate(Date.now());
+  check(Array.isArray(today) && (derbyToday ? today[0]?.race_name === 'Derby' && today[0].clocked === 1 && today[0].best_speed > 0 : !today.some(r => r.race_name === 'Derby')), `races today on the landing page (${JSON.stringify(today)})`);
+  check((await raw('submit_club_request', { p_contact_name: 'Jo', p_club_name: 'New Club', p_phone: '09171234567', p_email: '', p_message: 'Hi' })).ok === true, 'club request sent');
+  check((await raw('submit_club_request', { p_contact_name: 'J', p_club_name: 'X', p_phone: '', p_email: '' })).code === '22023', 'club request needs a name and a contact');
+  check((await sup.rpc('superadmin_club_requests')).data?.[0]?.club_name === 'New Club', 'Super Admin sees club requests');
+  check((await admin.rpc('superadmin_club_requests')).error?.code === '42501', 'club admin cannot see club requests');
+  await raw('log_client_error', { p_message: 'Boom', p_page: 'pages/x', p_source: 'x.js:1' });
+  await raw('log_client_error', { p_message: 'Boom', p_page: 'pages/x' });
+  check((await sup.rpc('superadmin_client_errors')).data?.[0]?.count === 2, 'app errors grouped');
+
+  // Season standings and members' reader status.
+  await admin.q('races', 'update', { values: { status: 'closed' }, filters: [['id', 'eq', 1]] });
+  const season = await admin.rpc('season_standings', { p_year: null });
+  check(season.data?.races === 1 && season.data.lofts[0]?.points === 10 && season.data.lofts[0].wins === 1, `season standings (${JSON.stringify(season.data || season.error)})`);
+  check((await member.rpc('member_reader_status')).data?.[0]?.name === 'Ana loft', 'member sees their loft reader');
+
+  // Push notifications: keys, subscribe, queued on a clocking and a race opening.
+  const pushKey = (await member.call('functions/avilonx-push', { action: 'keys' })).data?.public;
+  check(pushKey && Buffer.from(pushKey, 'base64url').length === 65, 'push keys made');
+  check((await member.rpc('push_public_key')).data === pushKey, 'push public key');
+  const ecdh = require('node:crypto').createECDH('prime256v1'); ecdh.generateKeys();
+  const sub = { p_endpoint: 'https://127.0.0.1:9/push/abc', p_p256dh: ecdh.getPublicKey().toString('base64url'), p_auth: require('node:crypto').randomBytes(16).toString('base64url'), p_device: 'Test' };
+  await member.rpc('push_subscribe', sub);
+  check((await member.rpc('push_status', { p_endpoint: sub.p_endpoint })).data?.this_device === true, 'this device subscribed');
+  await admin.q('races', 'insert', { values: { name: 'Race 2', race_point_id: 1, release_location: 'Batangas', release_latitude: 13.9, release_longitude: 121.05, status: 'open', release_at_utc: new Date().toISOString() } });
+  check((await member.rpc('push_test')).data?.ok === true, 'test notification queued');
+  await new Promise(r => setTimeout(r, 1500));
+  console.log('    push outbox checked by tests/run.sh');
+
   console.log(failures.length ? `FAILURES:\n${failures.map(f => ' - ' + f).join('\n')}` : 'All API checks passed.');
   process.exit(failures.length ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

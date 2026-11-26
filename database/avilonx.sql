@@ -3,6 +3,8 @@
 -- Import once in phpMyAdmin: create a database (e.g. "avilonx", collation
 -- utf8mb4_general_ci), open it, Import → this file. Then open the site: the
 -- first page asks you to create the Super Admin account.
+-- After an AvilonX update, import this file again: it only adds what is new
+-- (every table is "IF NOT EXISTS") and keeps your data.
 --
 -- All times are stored in UTC (the API sets the connection time zone to
 -- +00:00). Works with MariaDB 10.4+ (XAMPP) and MySQL 8.0.16+.
@@ -375,6 +377,72 @@ CREATE TABLE IF NOT EXISTS audit_log (
   KEY idx_audit_log_club_time (club_id, changed_at),
   CONSTRAINT audit_log_action CHECK (action IN ('insert', 'update', 'delete')),
   CONSTRAINT audit_log_club FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---- Landing page: club requests --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS club_requests (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  contact_name VARCHAR(120) NOT NULL,
+  club_name VARCHAR(180) NOT NULL,
+  phone VARCHAR(40) NOT NULL DEFAULT '',
+  email VARCHAR(254) NOT NULL DEFAULT '',
+  message VARCHAR(1000) NOT NULL DEFAULT '',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  handled_at DATETIME(6) NULL,
+  KEY club_requests_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---- App error reports (Super Admin → Clubs → App errors) ------------------------------
+CREATE TABLE IF NOT EXISTS client_errors (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  message VARCHAR(500) NOT NULL,
+  source VARCHAR(300) NOT NULL DEFAULT '',
+  page VARCHAR(200) NOT NULL DEFAULT '',
+  user_agent VARCHAR(300) NOT NULL DEFAULT '',
+  app_version VARCHAR(40) NOT NULL DEFAULT '',
+  user_id CHAR(36) NULL,
+  club_id BIGINT NULL,
+  count INT NOT NULL DEFAULT 1,
+  first_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  last_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  KEY idx_client_errors_last (last_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---- Push notifications (Web Push) -------------------------------------------------------
+CREATE TABLE IF NOT EXISTS push_settings (
+  id INT NOT NULL PRIMARY KEY DEFAULT 1,
+  vapid_public VARCHAR(120) NOT NULL,
+  vapid_private TEXT NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  CONSTRAINT push_settings_one CHECK (id = 1)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  endpoint VARCHAR(1000) NOT NULL,
+  endpoint_hash CHAR(64) GENERATED ALWAYS AS (SHA2(endpoint, 256)) STORED,
+  p256dh VARCHAR(200) NOT NULL,
+  auth VARCHAR(100) NOT NULL,
+  device VARCHAR(120) NOT NULL DEFAULT '',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  UNIQUE KEY push_subscriptions_endpoint (endpoint_hash),
+  KEY idx_push_subscriptions_user (user_id),
+  CONSTRAINT push_subscriptions_user FOREIGN KEY (user_id) REFERENCES auth_users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS push_outbox (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  title VARCHAR(120) NOT NULL,
+  body VARCHAR(400) NOT NULL,
+  url VARCHAR(300) NOT NULL DEFAULT '',
+  tag VARCHAR(60) NOT NULL DEFAULT '',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  sent_at DATETIME(6) NULL,
+  error VARCHAR(300) NULL,
+  KEY idx_push_outbox_created (created_at),
+  CONSTRAINT push_outbox_user FOREIGN KEY (user_id) REFERENCES auth_users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

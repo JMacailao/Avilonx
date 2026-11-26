@@ -64,7 +64,13 @@ AvilonX works without internet for clocking, but a few tools load libraries from
 the internet the first time they are used: reading Excel files, the sticker
 barcode printer, scanning loading forms (OCR) and the barcode camera scanner.
 
-## 8. Backups
+## 8. Updating AvilonX
+
+Replace the files with the new version (keep `api/config.php` and `uploads`),
+then in phpMyAdmin import `database/avilonx.sql` again into the same database:
+it only adds what is new and keeps your data.
+
+## 9. Backups
 
 phpMyAdmin → `avilonx` → **Export** → **Go** saves the whole database as a `.sql`
 file. Also copy the `uploads` folder (bird photos, videos, club logos). Do it

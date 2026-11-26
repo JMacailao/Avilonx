@@ -220,7 +220,7 @@ function new_clock(array $entry, string $receivedAt, string $source, string $tim
     q('INSERT INTO clock_events (race_entry_id, pigeon_ring, received_at_utc, source, verification, server_received_at_utc, time_source) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [$entry['id'], $entry['pigeon_ring'] ?? '', $receivedAt, $source, 'provisional', now_utc(), $timeSource]);
     $clock = row('SELECT * FROM clock_events WHERE id = ?', [db()->lastInsertId()]);
-    audit('clock_events', 'insert', null, $clock);
+    after_write('clock_events', 'insert', $clock, null);   // Change history and notifications
     return $clock;
 }
 // Race, release, distance, flight time and speed for a receipt.

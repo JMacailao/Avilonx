@@ -25,6 +25,9 @@ return [
     // http://localhost/avilonx or https://www.avilonx.site
     'site_url' => 'http://localhost/avilonx',
 
+    // Push notifications (optional): contact sent to push services.
+    'push_contact' => 'mailto:admin@avilonx.site',
+
     // Forgot password emails (optional): Resend API key and sender.
     'resend_api_key' => '',
     'reset_from' => 'AvilonX <noreply@avilonx.site>',

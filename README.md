@@ -31,7 +31,11 @@ bonding with photos, race entries, remarks, clocking, show-up, results, race day
 change history, club settings and logo), loft RFID readers (sketches send to
 this server: set its address on the reader's page), members (races, clocking by sticker
 code and NFC, receipts and videos, pigeons, results, settings), public results,
-forgot password by email, one device per account.
+forgot password by email, one device per account, push notifications (HTTPS
+sites; docs/PUSH.md), landing page with races today and club requests, season
+standings, app error reports for the Super Admin.
+
+Backups: [docs/BACKUP.md](docs/BACKUP.md).
 
 Not yet:
 - **Telegram** results for loft reader owners.

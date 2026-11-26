@@ -203,7 +203,7 @@ function device_rfid_scan(array $a): array
             q('INSERT INTO clock_events (race_entry_id, pigeon_ring, received_at_utc, server_received_at_utc, time_source, source, verification) VALUES (?, ?, ?, ?, ?, ?, ?)',
                 [$entry['id'], $entry['pigeon_ring'], $tap, $server, $source, 'nfc', 'provisional']);
             $clock = row('SELECT * FROM clock_events WHERE id = ?', [db()->lastInsertId()]);
-            audit('clock_events', 'insert', null, $clock);
+            after_write('clock_events', 'insert', $clock, null);   // Change history and notifications
             $late = $source === 'reader' && $tapTs < $serverTs - 60 ? ' at the time it was tapped (sent late).' : '.';
             $result = ['status' => 'accepted', 'message' => "Ring {$entry['pigeon_ring']} clocked for {$race['name']}$late$note"];
         }

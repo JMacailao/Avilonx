@@ -230,6 +230,9 @@ function after_write(string $table, string $op, ?array $new, ?array $old): void
         race_point_moved($new, $old);
     }
     if (in_array($table, ['races', 'race_entries', 'clock_events', 'pigeons'], true)) audit($table, $op, $old, $new);
+    // Push notifications: a pigeon clocked; a race opened.
+    if ($table === 'clock_events' && $op === 'insert') push_on_clock($new);
+    if ($table === 'races' && $new !== null && $new['status'] === 'open' && ($old === null || $old['status'] !== 'open')) push_on_race_open($new);
 }
 function same_coords(array $a, array $b, string $lat, string $lon): bool
 {

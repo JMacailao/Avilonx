@@ -20,4 +20,9 @@ SERVER=$!
 trap 'kill $SERVER 2>/dev/null; rm -rf "$TMP"' EXIT
 sleep 1
 BASE=http://127.0.0.1:$PORT node tests/api.cjs
+# Notifications: queued for the race opening and the test, then tried (the test
+# address cannot be reached, so each is marked sent with an error).
+PUSH=$("${MYSQL[@]}" -N "$DB_NAME" -e "SELECT CONCAT(COUNT(*), '/', SUM(sent_at IS NOT NULL), '/', SUM(error LIKE 'Push service:%')) FROM push_outbox WHERE tag IN ('test') OR tag LIKE 'race-%'")
+[ "$PUSH" = "2/2/2" ] || { echo "push outbox: expected 2/2/2 (queued/tried/error), got $PUSH"; exit 1; }
+echo "Notifications queued and sent after the answer: OK ($PUSH)"
 BASE=http://127.0.0.1:$PORT node tests/smoke.cjs

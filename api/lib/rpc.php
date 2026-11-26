@@ -248,7 +248,7 @@ function rpc_functions(): array
                 'telegram', 'race-point-recalc', 'clock-videos', 'club-logo', 'race-day', 'realtime'];
             return array_fill_keys($parts, true);
         },
-    ] + password_reset_functions() + clocking_functions() + reader_functions();
+    ] + password_reset_functions() + clocking_functions() + reader_functions() + push_functions() + extra_functions();
 }
 
 function single_device_applies(): bool

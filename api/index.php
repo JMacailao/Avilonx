@@ -12,11 +12,18 @@ require __DIR__ . '/lib/rpc.php';
 require __DIR__ . '/lib/rpc_clocking.php';
 require __DIR__ . '/lib/rpc_readers.php';
 require __DIR__ . '/lib/storage.php';
+require __DIR__ . '/lib/push.php';
+require __DIR__ . '/lib/rpc_extra.php';
 
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: same-origin');
 
 $route = (string)($_GET['r'] ?? '');
+// Supabase-style address (/rest/v1/rpc/<name>), used by assets/js/config.js
+// callers (landing page, error reports): answered in Supabase's format, the
+// result itself or { message, code }.
+$rawRpc = null;
+if (preg_match('#^/?rest/v1/rpc/([a-z0-9_]+)$#', $route, $m)) { $rawRpc = $m[1]; $route = 'rpc/' . $m[1]; }
 try {
     // Files are opened by links (GET), everything else is POST.
     if ($route === 'storage/file') storage_file();
@@ -47,7 +54,9 @@ try {
             $name = substr($route, 4);
             $functions = rpc_functions();
             if (!isset($functions[$name])) fail("Could not find the function public.$name in the schema cache", 'PGRST202', 404);
-            send_json(['data' => $functions[$name]($body)]);
+            $result = $functions[$name]($body);
+            if ($rawRpc !== null) send_json($result);
+            send_json(['data' => $result]);
         case $route === 'storage/upload':
             send_json(['data' => storage_upload()]);
         case $route === 'storage/remove':
@@ -56,9 +65,12 @@ try {
             send_json(['data' => storage_sign($body)]);
         case $route === 'functions/avilonx-password-reset':
             send_json(['data' => function_password_reset($body)]);
+        case $route === 'functions/avilonx-push':
+            send_json(['data' => function_push($body)]);
     }
     fail('Not found', 'PGRST000', 404);
 } catch (ApiError $e) {
+    if ($rawRpc !== null) send_json(['message' => $e->getMessage(), 'code' => $e->sqlstate], $e->status);
     send_json(['error' => ['message' => $e->getMessage(), 'code' => $e->sqlstate]], $e->status);
 } catch (Throwable $e) {
     error_log('AvilonX API error: ' . $e);

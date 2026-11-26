@@ -221,6 +221,17 @@ function send_json($payload, int $status = 200): never
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+    $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+    $later = function_exists('push_has_pending') && push_has_pending();
+    if ($later) { header('Content-Length: ' . strlen($json)); header('Connection: close'); }
+    echo $json;
+    // Notifications are sent after the answer has gone back to the page.
+    if ($later) {
+        ignore_user_abort(true);
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+        else { while (ob_get_level() > 0) ob_end_flush(); flush(); }
+        push_flush_pending();
+    }
     exit;
 }
