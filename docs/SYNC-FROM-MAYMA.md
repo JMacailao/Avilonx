@@ -16,6 +16,8 @@ copy it here, then keep these PHP differences:
 | `pages/login/page.js` | Database setup message mentions phpMyAdmin / api/config.php |
 | `pages/superadmin/setup/page.js` | "About this database" instead of the SQL Editor steps |
 | `index.html` | "Secure sign-in" instead of "Supabase secured" (if shown) |
+| `tools/rfid-reader/*/*.ino` | Send to the AvilonX server address (setting + page box, http or https, `api/index.php?r=rpc/...`) instead of Supabase; redirect / wrong-address taps kept. Port reader changes by hand |
+| `docs/RFID-READER.md` | Extra section "PHP version: the AvilonX server address" |
 
 Database changes on Mayma-Clocking (`*.sql`) are ported by hand: new columns
 or tables go in `database/avilonx.sql` (plus an ALTER for existing databases),

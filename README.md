@@ -20,6 +20,7 @@ Supabase). It runs on **XAMPP** on a club computer or on any **PHP hosting**.
 | `api/` | The PHP API: sign-in, access rules, all server functions, file uploads |
 | `database/avilonx.sql` | The MySQL database (import once in phpMyAdmin) |
 | `uploads/` | Bird photos, clocking videos, club logos (not in Git) |
+| `tools/rfid-reader/` | Loft reader sketches (ESP8266 / ESP32 / ESP32-S3) for this PHP server: see [docs/RFID-READER.md](docs/RFID-READER.md) |
 | `tests/` | API checks and a browser test of every page (`bash tests/run.sh`) |
 
 ## Status
@@ -27,13 +28,12 @@ Supabase). It runs on **XAMPP** on a club computer or on any **PHP hosting**.
 Working: first start, Super Admin (clubs, RFID tags, stickers, loft readers),
 club administrator and staff (members, team accounts, race points, races, bird
 bonding with photos, race entries, remarks, clocking, show-up, results, race day,
-change history, club settings and logo), members (races, clocking by sticker
+change history, club settings and logo), loft RFID readers (sketches send to
+this server: set its address on the reader's page), members (races, clocking by sticker
 code and NFC, receipts and videos, pigeons, results, settings), public results,
 forgot password by email, one device per account.
 
 Not yet:
 - **Telegram** results for loft reader owners.
-- **Loft reader sketches** pointing to the PHP server (the server side is ready:
-  `api/index.php?r=rpc/device_rfid_scan` and `device_rfid_heartbeat`).
 - **Moving data** from the Supabase version.
 - Live updates are replaced by the pages refreshing every few seconds.

@@ -1,0 +1,222 @@
+# AvilonX loft RFID reader (ESP8266 or ESP32)
+
+The sketch is `tools/rfid-reader/avilonx-rfid-reader/avilonx-rfid-reader.ino`.
+The same file works on an **ESP8266** (NodeMCU, Wemos D1 mini) and an **ESP32**
+(ESP32 DevKit): choose the board in the Arduino IDE and the sketch picks the
+right pins and libraries.
+
+## PHP version: the AvilonX server address
+
+These sketches send taps to **your own AvilonX server** (this PHP + MySQL
+version), not to Supabase. Each reader needs the server's address once:
+
+- **XAMPP on a club computer:** `http://<computer's IP>/avilonx`, e.g.
+  `http://192.168.1.10/avilonx` (find the IP with `ipconfig` on that computer,
+  and give it a fixed address in the router so it does not change). The reader
+  and the computer must be on the same Wi-Fi.
+- **Hosting:** the site's address, e.g. `https://www.yourclub.com` (use the
+  `https://` address: the reader does not follow a redirect from `http://`).
+
+Type it on the reader's page (**Device Registration → AvilonX Server**, or the
+**AvilonX server address** box on the USB reader), or put it in
+`AVILONX_SERVER` at the top of the sketch before uploading. The OLED shows
+`Server: NOT SET` until it is set. Taps are kept until the address is right; a
+wrong address shows "not found" or "not an AvilonX server" and nothing is lost.
+
+The reader calls `<server>/api/index.php?r=rpc/device_rfid_scan` (and
+`device_rfid_heartbeat` every minute) with its serial and device key. Register the
+reader and get its device key on **Super Admin → RFID readers**, as before.
+
+## Parts
+
+| Part | Notes |
+|---|---|
+| ESP32 DevKit (recommended) **or** ESP8266 NodeMCU / Wemos D1 mini | |
+| RC522 RFID reader (13.56 MHz) | **3.3 V only** |
+| OLED 128×64, I2C, 4 pins (GND, VCC, SCL, SDA) | 0.96" SSD1306 or 1.3" SH1106. Optional |
+| **DS3231** clock module with coin cell (recommended) | Keeps tap times when switched off; about 1 minute off per year. Shares the OLED's two wires |
+| (or a DS1302 clock module) | Older option, a few seconds off per day, 3 wires |
+| Active 3.3 V buzzer module | Optional: beeps on each tap |
+
+No extra button is needed: the board's own **FLASH** (ESP8266) or **BOOT** (ESP32)
+button is used.
+
+## Arduino IDE
+
+1. Boards: install **esp8266** (by ESP8266 Community) or **esp32** (by Espressif).
+2. Libraries (Sketch → Include Library → Manage Libraries): **MFRC522** and **U8g2**.
+3. Board: *NodeMCU 1.0 (ESP-12E Module)* or *ESP32 Dev Module*.
+   **ESP32:** also set **Tools → Partition Scheme → "Huge APP (3MB No OTA/1MB
+   SPIFFS)"**. With the default the sketch is too big ("Sketch too big … text
+   section exceeds available space"). Don't use "Minimal SPIFFS": it leaves too
+   little room for saved taps. Then Upload.
+4. At the top of the sketch:
+   - 1.3" OLED (SH1106): `#define OLED_SH1106 1`
+   - a buzzer module that sounds on LOW: `#define BUZZER_ACTIVE_LOW 1`
+   - ESP8266 with an older wiring: `#define ESP8266_WIRING 2` or `1` (see below)
+
+## ESP32-S3 + USB 125 kHz reader (only these two)
+
+The simplest loft reader: an **ESP32-S3** board with two USB-C ports (e.g.
+ESP32-S3 DevKitC-1, "N16R8 dual Type-C") and a **USB 125 kHz desktop reader** (the
+kind that types the tag number and Enter, like a keyboard). Nothing else to wire.
+
+It has its **own, smaller sketch**:
+`tools/rfid-reader/avilonx-usb-reader/avilonx-usb-reader.ino` (no extra libraries
+needed). The main sketch also works with this setup, if you want to add an OLED or
+clock module later.
+
+1. **Connect:** the reader's USB plug → a **USB-A to USB-C OTG adapter** → the
+   board's port marked **USB** (or OTG). Power and upload through the other port,
+   marked **COM** or **UART**.
+2. **Arduino IDE:** Board **ESP32S3 Dev Module**, **USB Mode: Hardware CDC and
+   JTAG**, **USB CDC On Boot: Disabled**, **Partition Scheme: Huge APP (3MB No
+   OTA/1MB SPIFFS)**. With the small sketch nothing else is needed (the main
+   sketch also needs the MFRC522 and U8g2 libraries). Upload through the COM port.
+3. **Check:** the Serial Monitor (115200, COM port) says *USB 125 kHz reader
+   connected*, and the reader's light is on. **If the light stays off**, the board
+   is not giving 5 V to its USB port: bridge the small **USB-OTG / IN-OUT** pads
+   near the ports, or use an OTG adapter with its own power.
+4. **Tags:** register the 125 kHz tags in AvilonX with the **same reader on a
+   computer** (Super Admin → Register NFC). The number the reader types (e.g.
+   `0012345678`) is turned into the same tag ID on the ESP32-S3 as on the website.
+
+Without a clock module the tap time comes from the internet (set after power-up);
+an OLED, DS3231 and buzzer can be added later on GPIO8/9 (I2C) and GPIO4.
+
+## Wiring: ESP32 (recommended)
+
+Everything on **3.3 V** (3V3 pin).
+
+| Module | Module pin | ESP32 pin |
+|---|---|---|
+| RC522 | SDA | **GPIO5** |
+| | SCK | **GPIO18** |
+| | MOSI | **GPIO23** |
+| | MISO | **GPIO19** |
+| | RST | **GPIO27** |
+| | 3.3V / GND | 3V3 / GND |
+| OLED | SDA | **GPIO21** |
+| | SCL | **GPIO22** |
+| | VCC / GND | 3V3 / GND |
+| DS3231 | SDA | **GPIO21** (same as the OLED) |
+| | SCL | **GPIO22** (same as the OLED) |
+| | VCC / GND | 3V3 / GND |
+| Buzzer (optional) | signal (I/O) | **GPIO4** |
+| | VCC / GND | 3V3 / GND |
+| Button | | the board's **BOOT** button (or a button from GPIO32 to GND) |
+| LED | | the board's blue LED (GPIO2) |
+
+A DS1302 instead of the DS3231: CLK→GPIO25, DAT→GPIO26, RST→GPIO33.
+
+## Wiring: ESP8266 (`ESP8266_WIRING 3`, the default)
+
+| Module | Module pin | ESP8266 pin |
+|---|---|---|
+| RC522 | SDA | **D8** |
+| | SCK | **D5** |
+| | MOSI | **D7** |
+| | MISO | **D6** |
+| | RST | **D0** |
+| | IRQ | not connected |
+| | 3.3V / GND | 3V3 / GND |
+| OLED | SDA | **D2** |
+| | SCL | **D1** |
+| | VCC / GND | 3V3 / GND |
+| DS3231 | SDA | **D2** (same as the OLED) |
+| | SCL | **D1** (same as the OLED) |
+| | VCC / GND | 3V3 / GND |
+| Buzzer (optional) | signal (I/O) | **RX** |
+| | VCC / GND | 3V3 / GND |
+| Button | | the board's **FLASH** button |
+| LED | | the board's blue LED (D4) |
+
+Free pins: **D3** (the FLASH button) and **TX** (Serial Monitor, 115200 baud).
+
+Older wirings still work:
+
+- `ESP8266_WIRING 2` (OLED + DS1302): RC522 SDA D8, RST to 3V3; OLED D2/D1; DS1302
+  CLK D3, DAT D4, RST D0; button RX→GND.
+- `ESP8266_WIRING 1` (the first wiring, no OLED): RC522 SDA D2, RST D1; DS1302 CLK
+  D3, DAT D4, RST D8; button D0 with a 10 kΩ resistor to 3.3 V.
+
+**DS3231 tip:** the common "ZS-042" DS3231 board has a charging circuit meant for a
+rechargeable LIR2032 cell. At 3.3 V it hardly charges, so a normal CR2032 is fine.
+
+## Buttons, LED and buzzer
+
+| Action | What happens |
+|---|---|
+| Short press (under 3 s) | The reader's hotspot turns on for 10 minutes |
+| Hold 10 s, then let go (1 beep at 10 s) | Hotspot name/password back to RFID-READER / RFID12345, restart. The router Wi-Fi is kept |
+| Hold 20 s | **Forget the router Wi-Fi** too, restart with only the hotspot on |
+| Each tap | 1 beep |
+| AvilonX refuses a tap | 2 beeps, LED blinks 3 times |
+| AvilonX clocks it | LED blinks once |
+
+The device key and saved taps are always kept.
+
+## Forget the Wi-Fi (start again with no Wi-Fi)
+
+Either:
+
+- on the reader's page, **Wi-Fi Connection → Forget Wi-Fi**, or
+- hold the board's **FLASH** (ESP8266) or **BOOT** (ESP32) button **20 seconds**.
+
+The reader restarts with only its hotspot. Join **RFID-READER** (password
+RFID12345), open **http://192.168.4.1** and choose a Wi-Fi. The device key and the
+taps not yet sent are kept. (A full wipe, which also deletes the device key and the
+saved taps: upload again with *Tools → Erase Flash → All Flash Contents*.)
+
+## Opening the reader's page
+
+- **Before it's on your Wi-Fi:** join the reader's hotspot **RFID-READER** (password
+  RFID12345) and open **http://192.168.4.1**.
+- **Once it's on your Wi-Fi:** from any phone or computer on the same Wi-Fi, open the
+  address shown on the OLED, e.g. **http://192.168.1.23**, or
+  **http://avilonx-XXXX.local** (XXXX = last 4 characters of the device serial;
+  `.local` works on Windows 10/11, Mac, iPhone and most Android phones).
+- The reader's own hotspot switches **off 10 minutes after** it joins your Wi-Fi:
+  the reader's Wi-Fi is faster and steadier without it. It comes back by itself if
+  the Wi-Fi is lost for a minute, or with a short button press.
+
+## What the OLED shows
+
+1. **At start-up (5 s): which modules were found.**
+   `RFID RC522: OK / NOT FOUND`, `DS3231 clock: OK / not set` (or
+   `Clock module: MISSING`), `Storage: OK / ERROR`, the Wi-Fi name (or `not set`)
+   and `Device key: saved / NOT SET`.
+2. **On a tap: TAG TAPPED**, the tag in large letters, and whether it was saved.
+3. **AvilonX's reply** (5 s), marked `OK` or `!!`.
+4. **Otherwise, pages in turn (4 s each):**
+   - **Status:** mode, RFID reader, Wi-Fi, AvilonX, taps waiting to send (also `Q:`
+     at the top right) and the Philippine time.
+   - **WHAT IS NEEDED**, only when something is missing: RC522 wiring, Wi-Fi or
+     device key to set, no Wi-Fi, no reply from AvilonX, clock not set, no clock
+     module, saved taps nearly full.
+   - **OPEN READER PAGE** (on your Wi-Fi): its address and `.local` name, and whether
+     the hotspot is on.
+
+## Speed
+
+- The reader uses your router's DNS to find AvilonX.
+- **ESP32:** keeps its secure connection to AvilonX open between taps, so each tap
+  is sent without a new connection.
+- **ESP8266:** resumes the last secure session, which makes connecting about a
+  second faster.
+
+## When tags are sometimes not read
+
+The reader keeps reading while it sends to AvilonX (on the ESP32 tags are read on
+their own task; both boards wait for 1.5 s without a tap before sending). If tags
+are still sometimes missed, it is usually the hardware:
+
+- **Wires:** keep the RC522 wires short (under 15 cm) and firm. Loose breadboard
+  jumpers cause misses; solder or use female-female jumpers straight on the pins.
+- **Power:** add a **100 µF capacitor** across the RC522's 3.3V and GND (long leg to
+  3.3V). Wi-Fi draws short bursts of current that can upset the RC522. Use a good
+  USB cable and power supply (at least 1 A).
+- **The tag:** hold it flat over the middle of the RC522 antenna, within 2–3 cm,
+  for half a second. Keep metal away from the antenna.
+- **Serial Monitor (115200):** `RFID reader restarted: it stopped answering` means
+  the RC522 lost power or a wire for a moment: check the power and wires above.
