@@ -3,7 +3,7 @@
 The website (pages/, assets/, index.html) comes from **JMacailao/Mayma-Clocking**
 (the Supabase version). Each update there is brought here too.
 
-**Last synced Mayma-Clocking commit:** `1645103`
+**Last synced Mayma-Clocking commit:** `384e065`
 
 To sync: take every file changed on Mayma-Clocking `main` since that commit,
 copy it here, then keep these PHP differences:
@@ -12,7 +12,6 @@ copy it here, then keep these PHP differences:
 |---|---|
 | `assets/js/supabase.js` | Connects to the PHP API (never copy the Supabase one over it) |
 | `assets/js/config.js` | Points `SUPABASE_URL` at `api/index.php?r=`, so code calling `${SUPABASE_URL}/rest/v1/rpc/<name>` reaches the PHP API (never copy the Supabase one) |
-| `assets/js/app.js`, `assets/js/i18n.js` | "Server connected" instead of "Supabase connected" |
 | `assets/js/shared.js` | "Could not connect to the AvilonX server" |
 | `pages/login/page.js` | Database setup message mentions phpMyAdmin / api/config.php |
 | `pages/superadmin/setup/page.js` | "About this database" instead of the SQL Editor steps |
