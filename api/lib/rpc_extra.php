@@ -6,6 +6,30 @@ declare(strict_types=1);
 function extra_functions(): array
 {
     return [
+        // ---- Deleting a race: with pigeons only 6 months after its race day ----------------
+        'admin_delete_race' => function ($a) {
+            if (!can_manage_club_data()) deny('Club administrator or staff account required.');
+            return transaction(function () use ($a) {
+                $race = row("SELECT id, COALESCE(end_date, open_date, DATE(DATE_ADD(release_at_utc, INTERVAL 8 HOUR)), DATE(DATE_ADD(created_at, INTERVAL 8 HOUR))) AS race_day
+                             FROM races WHERE id = ? AND club_id = ? FOR UPDATE", [(int)($a['p_race_id'] ?? 0), current_club_id()]);
+                if (!$race) fail('Race not found.');
+                $entries = (int)val('SELECT COUNT(*) FROM race_entries WHERE race_id = ?', [$race['id']]);
+                $clocks = (int)val('SELECT COUNT(*) FROM clock_events c JOIN race_entries e ON e.id = c.race_entry_id WHERE e.race_id = ?', [$race['id']]);
+                if ($entries > 0) {
+                    $allowed = (string)val('SELECT DATE_ADD(?, INTERVAL 6 MONTH)', [$race['race_day']]);
+                    if ($allowed > (string)val('SELECT DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 8 HOUR))')) {
+                        fail("This race has $entries pigeon" . ($entries === 1 ? '' : 's') . ' entered. A race with pigeons can be deleted 6 months after its race day (from ' . date('M d, Y', strtotime($allowed)) . ').');
+                    }
+                }
+                ensure_billing_schema();
+                q('UPDATE billing_counts SET deleted_at = UTC_TIMESTAMP(6) WHERE deleted_at IS NULL AND race_entry_id IN (SELECT id FROM race_entries WHERE race_id = ?)', [$race['id']]);
+                q('DELETE c FROM clock_events c JOIN race_entries e ON e.id = c.race_entry_id WHERE e.race_id = ?', [$race['id']]);
+                q('DELETE FROM race_entries WHERE race_id = ?', [$race['id']]);
+                q('DELETE FROM races WHERE id = ?', [$race['id']]);
+                return ['entries' => $entries, 'clocks' => $clocks];
+            });
+        },
+
         // ---- Landing page (no sign-in) -----------------------------------------------------
         'public_races_today' => function ($a) {
             $today = (new DateTimeImmutable('now', new DateTimeZone('Asia/Manila')))->format('Y-m-d');

@@ -205,8 +205,16 @@ function client() {
 
   // Deleting races: refused while it has entries; an empty race is deleted.
   check((await admin.q('races', 'delete', { filters: [['id', 'eq', 1]] })).error, 'a race with entries cannot be deleted');
+  check(/6 months after its race day/.test((await admin.rpc('admin_delete_race', { p_race_id: 1 })).error?.message || ''), 'a recent race with pigeons cannot be deleted');
+  check((await member.rpc('admin_delete_race', { p_race_id: 1 })).error?.code === '42501', 'members cannot delete races');
   await admin.q('races', 'insert', { values: { name: 'Delete me', race_point_id: 1, release_location: 'Batangas', release_latitude: 13.9, release_longitude: 121.05, status: 'draft' } });
   check(!(await admin.q('races', 'delete', { filters: [['name', 'eq', 'Delete me']] })).error && !(await admin.q('races', 'select', { filters: [['name', 'eq', 'Delete me']] })).data?.length, 'an empty race is deleted');
+  // An old race with a pigeon and a clocking: deleted with them (billing stays).
+  const old = (await admin.q('races', 'insert', { values: { name: 'Old race', race_point_id: 1, release_location: 'Batangas', release_latitude: 13.9, release_longitude: 121.05, status: 'draft', open_date: '2025-01-10', end_date: '2025-01-11' }, returning: 'id', single: 'single' })).data;
+  await sup.rpc('superadmin_register_sticker', { p_barcode_number: '00000999', p_scratch_code: '777777' });
+  const oldEntry = (await admin.q('race_entries', 'insert', { values: { race_id: old?.id, pigeon_id: 1, barcode: '00000999', distance_m: 1000 }, returning: 'id', single: 'single' }));
+  const gone = await admin.rpc('admin_delete_race', { p_race_id: old?.id });
+  check(gone.data?.entries === 1 && !(await admin.q('races', 'select', { filters: [['id', 'eq', old?.id]] })).data?.length, `an old race is deleted with its entries (${JSON.stringify(gone.data || gone.error || oldEntry.error)})`);
 
   console.log(failures.length ? `FAILURES:\n${failures.map(f => ' - ' + f).join('\n')}` : 'All API checks passed.');
   process.exit(failures.length ? 1 : 0);
