@@ -17,6 +17,12 @@ function table_columns(string $table): array
         $list = rows('SELECT COLUMN_NAME AS name, DATA_TYPE AS type, COLUMN_TYPE AS ctype, EXTRA AS extra, IS_NULLABLE AS nullable
                         FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION', [$table]);
         if (!$list) fail("Unknown table $table", 'PGRST205', 404);
+        // Databases imported before laps were added get the column here.
+        if ($table === 'races' && !in_array('lap', array_column($list, 'name'), true)) {
+            q('ALTER TABLE races ADD COLUMN lap SMALLINT NULL, ADD CONSTRAINT races_lap_range CHECK (lap IS NULL OR lap BETWEEN 1 AND 99)');
+            $cache = [];
+            return table_columns($table);
+        }
         $cols = [];
         foreach ($list as $c) {
             $kind = 'text';

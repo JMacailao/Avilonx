@@ -68,7 +68,7 @@ barcode printer, scanning loading forms (OCR) and the barcode camera scanner.
 
 Replace the files with the new version (keep `api/config.php` and `uploads`),
 then in phpMyAdmin import `database/avilonx.sql` again into the same database:
-it only adds what is new and keeps your data.
+it only adds what is new and keeps your data. (New columns, such as the race lap, are also added by AvilonX itself the first time they are used.)
 
 ## 9. Backups
 

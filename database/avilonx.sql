@@ -150,6 +150,8 @@ CREATE TABLE IF NOT EXISTS races (
   is_practice TINYINT(1) NOT NULL DEFAULT 0,
   requires_show_up TINYINT(1) NOT NULL DEFAULT 1,
   nfc_expiry_days INT NULL,
+  lap SMALLINT NULL,
+  CONSTRAINT races_lap_range CHECK (lap IS NULL OR lap BETWEEN 1 AND 99),
   CONSTRAINT races_status CHECK (status IN ('draft', 'open', 'closed')),
   CONSTRAINT races_open_requires_release_time CHECK (status <> 'open' OR release_at_utc IS NOT NULL),
   CONSTRAINT races_dates CHECK ((open_date IS NULL AND end_date IS NULL) OR (open_date IS NOT NULL AND end_date IS NOT NULL AND end_date >= open_date)),

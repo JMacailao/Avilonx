@@ -306,15 +306,16 @@ function public_race_results(int $club, string $date): array
 function public_race_summaries(int $club, string $date): array
 {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) fail('Choose a race date.');
+    table_columns('races'); // adds the lap column to older databases
     return array_map(fn($r) => [
-        'race_name' => $r['name'], 'release_location' => $r['release_location'],
+        'race_name' => $r['name'], 'lap' => $r['lap'] === null ? null : (int)$r['lap'], 'release_location' => $r['release_location'],
         'release_latitude' => (float)$r['release_latitude'], 'release_longitude' => (float)$r['release_longitude'],
         'release_at_utc' => format_value($r['release_at_utc'], 'timestamp'), 'race_status' => $r['status'],
         'birds_entered' => (int)$r['entered'], 'birds_clocked' => (int)$r['clocked'],
-    ], rows("SELECT r.name, r.release_location, r.release_latitude, r.release_longitude, r.release_at_utc, r.status,
+    ], rows("SELECT r.name, r.lap, r.release_location, r.release_latitude, r.release_longitude, r.release_at_utc, r.status,
                     (SELECT COUNT(*) FROM race_entries e WHERE e.race_id = r.id) AS entered,
                     (SELECT COUNT(DISTINCT e.id) FROM race_entries e JOIN clock_events c ON c.race_entry_id = e.id WHERE e.race_id = r.id AND c.verification <> 'rejected') AS clocked
-               FROM races r WHERE r.club_id = ? AND " . PH_DATE_SQL . " = ? AND r.is_practice = 0 ORDER BY r.name", [$club, $date]));
+               FROM races r WHERE r.club_id = ? AND " . PH_DATE_SQL . " = ? AND r.is_practice = 0 ORDER BY r.lap IS NULL, r.lap, r.name", [$club, $date]));
 }
 function seconds_between(string $from, string $to): float
 {

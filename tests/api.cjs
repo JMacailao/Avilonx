@@ -114,6 +114,10 @@ function client() {
   const results = await visitor.rpc('public_race_results', { p_club_id: 1, p_race_date: day });
   check(results.data?.length === 1 && results.data[0].rank === 1 && results.data[0].pigeon_ring === 'PH-1 P1' && results.data[0].verification === 'verified', `public results (${JSON.stringify(results.data || results.error)})`);
   check((await visitor.rpc('public_race_summaries', { p_club_id: 1, p_race_date: day })).data?.[0]?.birds_clocked === 1, 'public race summary');
+  await admin.q('races', 'update', { values: { lap: 4 }, filters: [['id', 'eq', 1]] });
+  check((await visitor.rpc('public_race_summaries', { p_club_id: 1, p_race_date: day })).data?.[0]?.lap === 4, 'race lap shown in the summary');
+  const badLap = await admin.q('races', 'update', { values: { lap: 0 }, filters: [['id', 'eq', 1]] });
+  check(!!badLap.error, 'lap 0 refused');
 
   // Moving the race point recalculates the distance (and keeps the history).
   await admin.q('race_points', 'update', { values: { latitude: 13.9 }, filters: [['id', 'eq', 1]] });
