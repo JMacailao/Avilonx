@@ -203,6 +203,11 @@ function client() {
   await new Promise(r => setTimeout(r, 1500));
   console.log('    push outbox checked by tests/run.sh');
 
+  // Deleting races: refused while it has entries; an empty race is deleted.
+  check((await admin.q('races', 'delete', { filters: [['id', 'eq', 1]] })).error, 'a race with entries cannot be deleted');
+  await admin.q('races', 'insert', { values: { name: 'Delete me', race_point_id: 1, release_location: 'Batangas', release_latitude: 13.9, release_longitude: 121.05, status: 'draft' } });
+  check(!(await admin.q('races', 'delete', { filters: [['name', 'eq', 'Delete me']] })).error && !(await admin.q('races', 'select', { filters: [['name', 'eq', 'Delete me']] })).data?.length, 'an empty race is deleted');
+
   console.log(failures.length ? `FAILURES:\n${failures.map(f => ' - ' + f).join('\n')}` : 'All API checks passed.');
   process.exit(failures.length ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
