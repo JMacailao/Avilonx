@@ -3,7 +3,7 @@
 The website (pages/, assets/, index.html) comes from **JMacailao/Mayma-Clocking**
 (the Supabase version). Each update there is brought here too.
 
-**Last synced Mayma-Clocking commit:** `ab61a0a`
+**Last synced Mayma-Clocking commit:** `e30062d`
 
 To sync: take every file changed on Mayma-Clocking `main` since that commit,
 copy it here, then keep these PHP differences:
