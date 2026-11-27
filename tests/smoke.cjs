@@ -5,9 +5,9 @@
 const { chromium } = require('playwright');
 const BASE = process.env.BASE || 'http://127.0.0.1:8090';
 const PAGES = {
-  admin: ['admin/dashboard', 'admin/raceday', 'admin/members', 'admin/birds', 'admin/race-points', 'admin/coordinates', 'admin/races', 'admin/entries', 'admin/remarks', 'admin/clocking', 'admin/showup', 'admin/readers', 'admin/results', 'admin/history', 'admin/users', 'admin/settings'],
+  admin: ['admin/dashboard', 'admin/raceday', 'admin/members', 'admin/birds', 'admin/race-points', 'admin/coordinates', 'admin/races', 'admin/entries', 'admin/remarks', 'admin/clocking', 'admin/showup', 'admin/readers', 'admin/results', 'admin/history', 'admin/users', 'admin/settings', 'admin/billing'],
   member: ['member/dashboard', 'member/history', 'member/clocking', 'member/pigeons', 'member/coordinates', 'member/results', 'member/settings'],
-  superadmin: ['superadmin/clubs', 'superadmin/stickers/register', 'superadmin/nfc', 'superadmin/readers', 'superadmin/stickers/generate', 'superadmin/setup'],
+  superadmin: ['superadmin/clubs', 'superadmin/stickers/register', 'superadmin/nfc', 'superadmin/readers', 'superadmin/stickers/generate', 'superadmin/billing', 'superadmin/setup'],
 };
 const ACCOUNTS = { superadmin: ['super', 'superpass1', 'team'], admin: ['admin', 'adminpass1', 'team'], member: ['ana', 'anapass12', 'member'] };
 (async () => {

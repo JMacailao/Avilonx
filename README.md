@@ -33,7 +33,7 @@ this server: set its address on the reader's page), members (races, clocking by 
 code and NFC, receipts and videos, pigeons, results, settings), public results,
 forgot password by email, one device per account, push notifications (HTTPS
 sites; docs/PUSH.md), landing page with races today and club requests, season
-standings, app error reports for the Super Admin.
+standings, app error reports for the Super Admin, billing (per bird encoded: bills by start/end date, invoices, warnings, closing a club).
 
 Backups: [docs/BACKUP.md](docs/BACKUP.md).
 

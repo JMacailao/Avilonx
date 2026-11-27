@@ -163,6 +163,33 @@ function client() {
   check(season.data?.races === 1 && season.data.lofts[0]?.points === 10 && season.data.lofts[0].wins === 1, `season standings (${JSON.stringify(season.data || season.error)})`);
   check((await member.rpc('member_reader_status')).data?.[0]?.name === 'Ana loft', 'member sees their loft reader');
 
+  // Billing: birds encoded, bills by start/end date, invoice, warnings, closing a club.
+  const phDay = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+  const sum = (await sup.rpc('superadmin_billing_summary', { p_start: phDay, p_end: phDay })).data?.find(r => r.club_id === 1);
+  check(sum?.birds === 1 && sum.amount === 5 && sum.unbilled === 1, `billing: the race entry is counted (${JSON.stringify(sum)})`);
+  check((await admin.rpc('club_billing_status')).data?.unbilled === 1, 'billing: club admin sees birds not billed yet');
+  check((await admin.rpc('superadmin_create_bill', { p_club_id: 1, p_start: phDay, p_end: phDay })).error?.code === '42501', 'billing: club admin cannot make bills');
+  check((await member.rpc('club_billing_status')).error?.code === '42501', 'billing: members do not see billing');
+  check((await other.rpc('billing_bills', { p_club_id: 1 })).error?.code === '42501', 'billing: another club is refused');
+  const bill = (await sup.rpc('superadmin_create_bill', { p_club_id: 1, p_start: phDay, p_end: phDay })).data;
+  check(bill?.birds === 1 && bill.amount === 5 && bill.settled_at === null, `billing: bill for the dates (${JSON.stringify(bill)})`);
+  check(/overlap/.test((await sup.rpc('superadmin_create_bill', { p_club_id: 1, p_start: phDay, p_end: phDay })).error?.message || ''), 'billing: overlapping dates refused');
+  const settled = (await sup.rpc('superadmin_settle_bill', { p_bill_id: bill?.id, p_paid_on: phDay, p_method: 'GCash', p_reference: 'R1', p_note: '' })).data;
+  check(settled?.invoice_no === `AVX-${phDay.slice(0, 4)}-0001` && settled.settled_at, `billing: settled with invoice ${settled?.invoice_no}`);
+  check((await admin.rpc('billing_bills', { p_club_id: null })).data?.[0]?.invoice_no === settled?.invoice_no, 'billing: club admin sees the settled bill');
+  await sup.rpc('superadmin_send_warning', { p_club_id: 1, p_message: 'Please pay', p_bill_id: null });
+  const warned = (await admin.rpc('club_account_status')).data;
+  check(warned?.warnings?.length === 1 && warned.is_closed === false, 'billing: warning pops up for the club admin');
+  await admin.rpc('club_dismiss_warning', { p_id: warned?.warnings?.[0]?.id });
+  check((await admin.rpc('club_account_status')).data?.warnings?.length === 0, 'billing: a closed warning stays closed');
+  await sup.rpc('superadmin_set_club_closed', { p_club_id: 1, p_closed: true, p_reason: 'Unpaid bill' });
+  check((await admin.rpc('club_account_status')).data?.is_closed === true, 'billing: closed club knows it is closed');
+  const locked = await admin.q('members', 'select');
+  check(locked.error || (locked.data || []).length === 0, 'billing: closed club admin sees no club data');
+  check((await member.q('members', 'select')).data?.length === 1, 'billing: members keep their access');
+  await sup.rpc('superadmin_set_club_closed', { p_club_id: 1, p_closed: false, p_reason: '' });
+  check((await admin.q('members', 'select')).data?.length >= 1, 'billing: reopened club admin is back');
+
   // Push notifications: keys, subscribe, queued on a clocking and a race opening.
   const pushKey = (await member.call('functions/avilonx-push', { action: 'keys' })).data?.public;
   check(pushKey && Buffer.from(pushKey, 'base64url').length === 65, 'push keys made');

@@ -245,10 +245,10 @@ function rpc_functions(): array
         'setup_status' => function ($a) {
             $parts = ['multi-club', 'account-credentials', 'public-results', 'sticker-barcodes', 'race-release-time', 'race-schedule-dates', 'nfc-tags', 'rfid-devices',
                 'entry-remarks', 'bird-bonding', 'show-up', 'rfid-tag-in-use', 'bird-ring-only', 'race-tag-expiry', 'club-settings', 'account-devices', 'password-reset',
-                'telegram', 'race-point-recalc', 'clock-videos', 'club-logo', 'race-day', 'realtime'];
+                'telegram', 'race-point-recalc', 'clock-videos', 'club-logo', 'race-day', 'realtime', 'billing'];
             return array_fill_keys($parts, true);
         },
-    ] + password_reset_functions() + clocking_functions() + reader_functions() + push_functions() + extra_functions();
+    ] + password_reset_functions() + clocking_functions() + reader_functions() + push_functions() + extra_functions() + billing_functions();
 }
 
 function single_device_applies(): bool

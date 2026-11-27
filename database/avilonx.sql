@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS clubs (
   form_number_boxes INT NOT NULL DEFAULT 8,
   single_device TINYINT(1) NOT NULL DEFAULT 0,
   logo_path VARCHAR(300) NULL,
+  bird_price DECIMAL(10,2) NOT NULL DEFAULT 5.00,
+  is_closed TINYINT(1) NOT NULL DEFAULT 0,
+  closed_reason VARCHAR(500) NULL,
+  closed_at DATETIME(6) NULL,
   UNIQUE KEY clubs_name_unique (name),
   CONSTRAINT clubs_sticker_rule CHECK (rfid_entry_sticker IN ('required', 'optional')),
   CONSTRAINT clubs_form_boxes CHECK (form_member_boxes BETWEEN 1 AND 8 AND form_prefix_boxes BETWEEN 0 AND 8 AND form_number_boxes BETWEEN 1 AND 10)
@@ -446,5 +450,77 @@ CREATE TABLE IF NOT EXISTS push_outbox (
   KEY idx_push_outbox_created (created_at),
   CONSTRAINT push_outbox_user FOREIGN KEY (user_id) REFERENCES auth_users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ---- Billing (per bird encoded in a race entry; bills, invoices, warnings) ------------------------
+CREATE TABLE IF NOT EXISTS club_bills (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  club_id BIGINT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  birds INT NOT NULL DEFAULT 0,
+  amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  created_by CHAR(36) NULL,
+  invoice_no VARCHAR(20) NULL,
+  settled_at DATETIME(6) NULL,
+  paid_on DATE NULL,
+  pay_method VARCHAR(40) NULL,
+  pay_reference VARCHAR(80) NULL,
+  pay_note VARCHAR(300) NULL,
+  UNIQUE KEY club_bills_invoice (invoice_no),
+  KEY club_bills_club (club_id, start_date),
+  CONSTRAINT club_bills_dates CHECK (end_date >= start_date),
+  CONSTRAINT club_bills_club_fk FOREIGN KEY (club_id) REFERENCES clubs(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS billing_counts (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  club_id BIGINT NOT NULL,
+  race_entry_id BIGINT NOT NULL,
+  race_id BIGINT NULL,
+  race_name VARCHAR(180) NULL,
+  member_no VARCHAR(40) NULL,
+  member_name VARCHAR(180) NULL,
+  pigeon_ring VARCHAR(80) NULL,
+  price DECIMAL(10,2) NOT NULL,
+  encoded_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  encoded_by CHAR(36) NULL,
+  deleted_at DATETIME(6) NULL,
+  bill_id BIGINT NULL,
+  UNIQUE KEY billing_counts_entry (race_entry_id),
+  KEY billing_counts_club_time (club_id, encoded_at),
+  KEY billing_counts_bill (bill_id),
+  CONSTRAINT billing_counts_club_fk FOREIGN KEY (club_id) REFERENCES clubs(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS club_warnings (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  club_id BIGINT NOT NULL,
+  bill_id BIGINT NULL,
+  message VARCHAR(1000) NOT NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  created_by CHAR(36) NULL,
+  seen_at DATETIME(6) NULL,
+  seen_by CHAR(36) NULL,
+  KEY club_warnings_club (club_id),
+  CONSTRAINT club_warnings_club_fk FOREIGN KEY (club_id) REFERENCES clubs(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS billing_log (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  club_id BIGINT NOT NULL,
+  action VARCHAR(30) NOT NULL,
+  detail VARCHAR(300) NULL,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  created_by CHAR(36) NULL,
+  KEY billing_log_club (club_id, created_at),
+  CONSTRAINT billing_log_club_fk FOREIGN KEY (club_id) REFERENCES clubs(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS billing_invoice_counter (
+  id TINYINT NOT NULL PRIMARY KEY,
+  n INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB;
+INSERT IGNORE INTO billing_invoice_counter (id, n) VALUES (1, 0);
 
 SET FOREIGN_KEY_CHECKS = 1;

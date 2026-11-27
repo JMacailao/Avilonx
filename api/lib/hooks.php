@@ -230,6 +230,9 @@ function after_write(string $table, string $op, ?array $new, ?array $old): void
         race_point_moved($new, $old);
     }
     if (in_array($table, ['races', 'race_entries', 'clock_events', 'pigeons'], true)) audit($table, $op, $old, $new);
+    // Billing: each bird encoded is counted; deleting keeps the count (non-refundable).
+    if ($table === 'race_entries' && $op === 'insert') billing_count_entry($new);
+    if ($table === 'race_entries' && $op === 'delete') billing_mark_deleted($old);
     // Push notifications: a pigeon clocked; a race opened.
     if ($table === 'clock_events' && $op === 'insert') push_on_clock($new);
     if ($table === 'races' && $new !== null && $new['status'] === 'open' && ($old === null || $old['status'] !== 'open')) push_on_race_open($new);

@@ -14,6 +14,7 @@ require __DIR__ . '/lib/rpc_readers.php';
 require __DIR__ . '/lib/storage.php';
 require __DIR__ . '/lib/push.php';
 require __DIR__ . '/lib/rpc_extra.php';
+require __DIR__ . '/lib/billing.php';
 
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: same-origin');

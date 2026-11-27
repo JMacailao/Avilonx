@@ -166,7 +166,18 @@ function profile(): ?array
 }
 function forget_profile_cache(): void { /* profile() is cached per request; new requests reload it. */ }
 function uid(): ?string { return profile()['id'] ?? null; }
-function role(): ?string { return profile()['role'] ?? null; }
+// A closed club's admin and staff have no access (billing); members keep theirs.
+function role(): ?string
+{
+    static $closed = null;
+    $p = profile();
+    if (!$p) return null;
+    if (in_array($p['role'], ['admin', 'staff'], true)) {
+        $closed ??= club_is_closed($p['club_id'] === null ? null : (int)$p['club_id']);
+        if ($closed) return null;
+    }
+    return $p['role'];
+}
 function current_club_id(): ?int { $c = profile()['club_id'] ?? null; return $c === null ? null : (int)$c; }
 function current_member_id(): ?int { $m = profile()['member_id'] ?? null; return $m === null ? null : (int)$m; }
 function is_superadmin(): bool { return role() === 'superadmin'; }

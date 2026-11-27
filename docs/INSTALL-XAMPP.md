@@ -21,7 +21,7 @@ Members and readers on the same Wi-Fi can use it at the computer's address, e.g.
 1. Open **http://localhost/phpmyadmin**.
 2. **New** (left) → Database name `avilonx`, collation **utf8mb4_general_ci** → **Create**.
 3. Click the new `avilonx` database → **Import** → choose
-   `C:\xampp\htdocs\avilonx\database\avilonx.sql` → **Import**. 22 tables appear.
+   `C:\xampp\htdocs\avilonx\database\avilonx.sql` → **Import**. 32 tables appear.
 
 ## 4. Settings
 
