@@ -1644,3 +1644,9 @@ th{color:#55657a}
 .club-warning-item p{margin:0 0 4px;font-size:15px;line-height:1.5}
 .club-warning .form-actions{justify-content:flex-end;margin-top:14px}
 .billing-dialog textarea{font:inherit;font-size:14px;line-height:1.5}
+/* Phones: the page never slides sideways while scrolling. Anything wider than
+   the screen (tables, lists) scrolls inside its own box, and reaching its end
+   does not drag the page or trigger the back gesture. */
+html{overflow-x:hidden}
+@supports (overflow-x:clip){html,body{overflow-x:clip}}
+.table-scroll,.entries-tab-bar,.entry-tab-bar,.clock-tab-bar,[role=tablist]{overscroll-behavior-x:contain}
