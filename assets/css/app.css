@@ -1727,3 +1727,47 @@ html{overflow-x:hidden}
 .member-form-panel .form-actions .button.secondary{grid-column:1/-1}
 @media (max-width:480px){.member-form-panel #record-form>.field:not(.radio-field){grid-template-columns:minmax(110px,40%) minmax(0,1fr)}.member-form-panel .field-label{font-size:13.5px}}
 .member-form-panel .coordinate-decimal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Race entries (design): race picker, pill tabs, card heads, label-left rows, icons in boxes, remark pills */
+.entries-head select{min-height:52px;padding-left:46px;border-radius:999px;border-color:#d4dce8;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300345f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 4h8v4a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 3M16 6h3a3 3 0 0 1-3 3M12 12v4M9 20h6M10 16h4'/%3E%3C/svg%3E") 16px center/20px no-repeat;font-size:15px;box-shadow:0 4px 14px -10px #0f172a40}
+.entries-tab-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:0;border:0;background:none}
+.entries-tab-bar button{min-height:54px;padding:6px 8px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);font-weight:600}
+.entries-tab-bar button+button::before{content:none}
+.entries-tab-bar button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 8px 18px -10px #00345fb3}
+.entries-tab-bar button[aria-selected="true"]::after{content:none}
+.entries-card{border-radius:18px;box-shadow:0 6px 24px -18px #0f172a40}
+.entries-card-head{display:flex;align-items:center;gap:14px;margin:0 0 4px}
+.entries-card-head h3{margin:0;font:700 17px/1.25 var(--font);color:var(--ink)}
+.entries-card-head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.entries-card-icon{display:grid;place-items:center;width:48px;height:48px;flex:none;border-radius:50%;background:#e8eef8;color:var(--green)}
+.entries-card-icon svg{width:24px;height:24px}
+.entries-member .entries-row{grid-template-columns:1fr;gap:10px}
+.entries-member .entries-row>.field,.entries-options-row>.field:not(.entry-remarks){display:grid;grid-template-columns:minmax(110px,34%) minmax(0,1fr);align-items:center;gap:8px 12px}
+.entries-card .field>span{font-weight:600}
+.entries-card .field input,.entries-card .field select{border-radius:12px;border-color:#d4dce8}
+.entries-ic-person select,.entries-ic-ring input,.entries-ic-trophy select,.entries-ic-flag select,.entries-ic-layers select{padding-left:44px;background-repeat:no-repeat;background-position:14px center;background-size:19px}
+.entries-ic-person select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300345f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 21c1-4.4 4.2-6.5 8-6.5s7 2.1 8 6.5'/%3E%3C/svg%3E")}
+.entries-ic-ring input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300345f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12'/%3E%3C/svg%3E")}
+.entries-ic-trophy select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300345f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 4h8v4a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 3M16 6h3a3 3 0 0 1-3 3M12 12v4M9 20h6M10 16h4'/%3E%3C/svg%3E")}
+.entries-ic-flag select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300345f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 21V4h13v9H5'/%3E%3Cpath d='M9 4v9M13 4v9M5 8.5h13'/%3E%3C/svg%3E")}
+.entries-ic-layers select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300345f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 3 9 5-9 5-9-5z'/%3E%3Cpath d='m3 13 9 5 9-5'/%3E%3C/svg%3E")}
+.entries-reader input[name=barcode]{padding-left:44px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300345f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8V5h3M17 5h3v3M20 16v3h-3M7 19H4v-3M8 9v6M10.5 9v6M13 9v6M16 9v6'/%3E%3C/svg%3E") 14px center/19px no-repeat}
+.entries-reader .input-with-button button{border-radius:12px;background:#eef3fb;color:var(--green)}
+.entries-member .entry-bird-tap{border:1px solid #cfe0f5;border-radius:12px;background:#eef5fd}
+.entries-options-row{grid-template-columns:1fr;gap:10px}
+.entries-options .entry-remarks{padding:4px 0 0;border:0}
+.entry-remarks-options{display:flex;flex-wrap:wrap;gap:8px 10px}
+.entry-remarks-options label{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px 0 12px;border:1px solid #d4dce8;border-radius:999px;background:#fff;font-size:14px;cursor:pointer}
+.entry-remarks-options label:has(input:checked){border-color:var(--green);background:#e8eef8;font-weight:700}
+.entry-remarks-options input{width:20px;height:20px;accent-color:var(--green)}
+.entries-options .form-actions{margin-top:6px}
+.entries-options .button.primary.entries-save{width:100%;min-height:54px;border-radius:14px;background:linear-gradient(90deg,#00264a,#003f73);font-size:16px;font-weight:700}
+.entries-save::before{content:"";width:20px;height:20px;background:#fff;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M5 4h11l3 3v13H5z'/%3E%3Cpath d='M8 4v5h7V4M8 20v-6h8v6'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M5 4h11l3 3v13H5z'/%3E%3Cpath d='M8 4v5h7V4M8 20v-6h8v6'/%3E%3C/svg%3E") center/contain no-repeat}
+.entries-registered .entries-card-head{margin-bottom:6px}
+@media (max-width:720px){
+  .entries-tab-bar{gap:6px}
+  .entries-tab-bar button{flex-direction:column;gap:4px;min-height:62px;font-size:12px}
+  .entries-tab-bar button svg{width:20px;height:20px}
+  .entries-member .entries-row>.field,.entries-options-row>.field:not(.entry-remarks){grid-template-columns:minmax(96px,32%) minmax(0,1fr)}
+}
+.entries-tab-bar button svg{display:block;flex:none}
