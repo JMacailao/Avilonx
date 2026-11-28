@@ -1840,3 +1840,44 @@ html{overflow-x:hidden}
   .raceday-stat.is-time strong,.raceday-stat.is-closes strong{font-size:17px;white-space:nowrap}
 }
 @media (max-width:720px){.raceday-stat.is-time strong,.raceday-stat.is-closes strong{white-space:normal;overflow-wrap:normal;word-break:keep-all}.raceday-stat{padding-right:58px}.raceday-stat-icon{width:38px;height:38px;right:10px}.raceday-stat-icon svg{width:20px;height:20px}}
+
+/* ============================================================================
+   AvilonX theme, all pages (member, club admin, Super Admin): the look of the
+   new Races / Members / Race entries / Race day designs. Member pages keep their
+   list style on phones (see "Member side on phones").
+   ============================================================================ */
+:root{--radius:16px;--radius-sm:12px;--shadow:0 8px 24px -18px #0f172a59;--accent:#ff7a00}
+.panel,.stat-card{border-radius:var(--radius);box-shadow:var(--shadow)}
+.panel-heading h2,.panel-heading h3{font-weight:700}
+.split-heading h2,.welcome-row h2{font-weight:700}
+/* Fields: taller, rounder, soft borders */
+.field input:not([type=checkbox]):not([type=radio]),.field select,.field textarea{min-height:46px;border-radius:12px;border-color:#d4dce8}
+.field>span{font-weight:600;color:var(--ink)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px #00345f1f}
+/* Buttons: rounded; the main action of a form or page is the orange pill */
+.button{border-radius:12px}
+.form-actions .button.primary,.button.primary.is-main,form>.button.primary:last-child{background:linear-gradient(90deg,#ff7a00,#ff9a1f);border-color:transparent;color:#fff;font-weight:700;border-radius:999px;box-shadow:0 8px 20px -10px #ff6a0099}
+.form-actions .button.primary:hover{filter:brightness(1.04)}
+.form-actions .button.primary:disabled{filter:grayscale(.3);opacity:.6}
+.entries-options .button.primary.entries-save{border-radius:14px;background:linear-gradient(90deg,#00264a,#003f73);box-shadow:none}
+.button.secondary{border-color:#d4dce8}
+/* Tags and counters: pills */
+.tag,.count-pill{border-radius:999px}
+.count-pill{background:#eef3fb;border-color:#dbe5f3;color:#334155;font-weight:600}
+/* Tables: card rows on phones get the same rounded, soft look */
+th{color:#5876a8}
+@media (max-width:720px){
+  .table-scroll table:not(.bird-table) tr{border-radius:16px;box-shadow:var(--shadow)}
+  .table-scroll td::before{color:#5876a8}
+}
+/* Pop-ups */
+dialog{border-radius:16px}
+/* Notices */
+.notice{border-radius:12px}
+/* Member pages on phones stay a flat list (no card shadows) */
+@media (max-width:720px){.member-body .page-view .panel,.member-body .stats-grid.three .stat-card{box-shadow:none}}
+/* Every main (primary) button: the orange pill; Save entry stays dark blue (design) */
+.button.primary{background:linear-gradient(90deg,#ff7a00,#ff9a1f);border-color:transparent;color:#fff;font-weight:700;border-radius:999px;box-shadow:0 8px 20px -10px #ff6a0099}
+.button.primary:hover{background:linear-gradient(90deg,#f06f00,#ff8f0a)}
+.entries-options .button.primary.entries-save,.entries-tab-bar .button.primary{border-radius:14px;background:linear-gradient(90deg,#00264a,#003f73);box-shadow:none}
+.club-lock-card .button.primary{border-radius:12px}
