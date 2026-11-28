@@ -1,6 +1,16 @@
 import { supabase, escapeHTML, formatDate, phDateTimeLocalToUtc, utcToPhDateTimeLocal, stateTag, dbError, message } from '../../../assets/js/shared.js';
 
 const STATUSES=[['draft','Draft'],['open','Open'],['closed','Closed']];
+// Field icons (schedule form).
+const I={trophy:'<path d="M8 4h8v4a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 3M16 6h3a3 3 0 0 1-3 3M12 12v4M9 20h6M10 16h4"/>',flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  calendar:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',finish:'<path d="M5 21V4h13v9H5"/><path d="M5 4h4v3H5zM13 4h5v3h-5zM9 7h4v3H9zM5 10h4v3H5zM13 10h5v3h-5z" fill="currentColor" stroke="none"/>',
+  bars:'<path d="M6 19v-4M12 19v-8M18 19V5" stroke-width="3"/>',lap:'<path d="M20 11a8 8 0 0 0-14-5l-2 2M4 13a8 8 0 0 0 14 5l2-2"/><path d="M4 4v4h4M20 20v-4h-4"/>',
+  clock:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8" r="1.5"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  save:'<path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',sheet:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h2M12 14h2M8 17h2"/>'};
+const icon=(name,cls='field-icon')=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[name]}</svg>`;
+const lbl=(name,text,required=false)=>`<span class="field-label">${icon(name)}${text}${required?'<b class="field-required" aria-hidden="true">*</b>':''}</span>`;
+const PIGEON='<svg class="schedule-card-art" viewBox="0 0 64 48" aria-hidden="true"><path d="M6 40c8-2 14-7 18-14l6-11c3-6 11-7 15-1l3 2 7 1-7 4c0 12-9 21-22 22l-8 5-2-6c-4 0-7-1-10-2z" fill="currentColor"/></svg>';
+const RACEFLAG='<svg class="schedule-card-art" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 44 16 6" stroke="currentColor" stroke-width="3" fill="none"/><path d="M16 6c8-3 14 4 24 1l-4 20c-10 3-16-4-24-1z" fill="currentColor" opacity=".35"/><path d="M16 6l2 7 6-1-1-7zM24 12l-1 7 7 1 1-7zM18 13l-2 7 7 1 1-7zM30 13l7-2-1 7-7 2z" fill="currentColor"/></svg>';
 
 export async function render(view) {
   const {data:points,error}=await supabase.from('race_points').select('id,location,sector,latitude,longitude').order('location');if(error)throw error;
@@ -28,18 +38,18 @@ export async function render(view) {
   <div class="schedule-layout" data-schedule-layout>
     <section class="panel schedule-list"><div class="table-scroll"><table><thead><tr><th>Race</th><th>Release point</th><th>Release time</th><th>Pigeons</th><th>Status</th></tr></thead><tbody data-schedule-rows></tbody></table></div></section>
     <aside class="panel schedule-editor" data-schedule-editor hidden>
-      <div class="schedule-editor-head"><h3 data-editor-title>Edit schedule</h3><button class="schedule-editor-close" type="button" data-close-editor aria-label="Close">×</button></div>
+      <div class="schedule-editor-head">${icon('sheet','schedule-head-icon')}<h3 data-editor-title>Race information</h3><button class="schedule-editor-close" type="button" data-close-editor aria-label="Close">×</button></div>
       <section class="race-details" data-race-details aria-label="Race details" hidden></section>
       <form id="race-form" class="schedule-form">
-        <label class="field"><span>Race name</span><input name="name" maxlength="180" required></label>
-        <label class="field"><span>Release point</span><select name="race_point_id" required><option value="">Choose a location</option>${points.map(p=>`<option value="${p.id}">${escapeHTML(p.location)}${p.sector?` · ${escapeHTML(p.sector)}`:''}</option>`).join('')}</select><small class="small" data-point-note hidden>Locked (pigeons registered). Edit it on Race points.</small></label>
-        <div class="schedule-form-pair"><label class="field"><span>Open date</span><input name="open_date" type="date" required></label><label class="field"><span>End date</span><input name="end_date" type="date" required></label></div>
-        <div class="schedule-form-row"><label class="field"><span>Status</span><select name="status">${STATUSES.map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label><label class="field schedule-lap"><span>Lap</span><input name="lap" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="e.g. 1"></label></div>
-        <div class="field schedule-release"><span>Official release</span><input name="release_date" type="hidden"><input name="release_time" type="hidden"><div class="schedule-release-row"><strong data-release-text>Not set</strong><button class="button secondary" type="button" data-apply-release>Apply release date &amp; time</button></div><small class="small">Philippine time. You can save the schedule without it; it is needed to open the race.</small></div>
-        <div class="field"><span>RFID tag expiry</span><div class="schedule-form-pair"><select name="nfc_expiry_days" aria-label="RFID tag expiry"><option value="">No expiry</option><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="5">5 days</option><option value="7">7 days</option><option value="14">14 days</option><option value="custom">Custom…</option></select><input name="nfc_expiry_custom" type="number" min="1" max="365" step="1" inputmode="numeric" placeholder="Days" aria-label="RFID tag expiry in days" hidden></div><small class="small">From release. Then RFID tags stop clocking.</small></div>
-        <label class="schedule-practice schedule-showup"><input type="checkbox" name="requires_show_up" checked><span><strong>Show up needed</strong> Clocked pigeons must be brought to the club before the race closes, or they are disqualified.</span></label>
-        <label class="schedule-practice"><input type="checkbox" name="is_practice"><span><strong>Practice race</strong> A test race to try readers and phones. It never appears in the public results.</span></label>
-        <div class="schedule-form-actions"><button class="button primary" type="submit" data-save-schedule>Save changes</button><button class="button secondary" type="button" data-cancel-editor>Cancel</button><button class="button danger-button" type="button" data-delete-race hidden>Delete race</button></div>
+        <label class="field">${lbl('trophy','Race name',true)}<input name="name" maxlength="180" required></label>
+        <label class="field schedule-point">${lbl('flag','Release point',true)}<select name="race_point_id" required><option value="">Choose a location</option>${points.map(p=>`<option value="${p.id}">${escapeHTML(p.location)}${p.sector?` · ${escapeHTML(p.sector)}`:''}</option>`).join('')}</select><small class="small" data-point-note hidden>Locked (pigeons registered). Edit it on Race points.</small></label>
+        <div class="schedule-form-pair"><label class="field">${lbl('calendar','Open date')}<input name="open_date" type="date" required></label><label class="field">${lbl('finish','End date')}<input name="end_date" type="date" required></label></div>
+        <div class="schedule-form-row"><label class="field schedule-status" data-status-field>${lbl('bars','Status')}<span class="schedule-status-dot" aria-hidden="true"></span><select name="status">${STATUSES.map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label><label class="field schedule-lap">${lbl('lap','Lap')}<input name="lap" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="e.g. 1"></label></div>
+        <div class="field schedule-release">${lbl('clock','Official release')}<input name="release_date" type="hidden"><input name="release_time" type="hidden"><button class="schedule-release-box" type="button" data-apply-release aria-label="Apply release date &amp; time"><span>${icon('calendar')}<span data-release-date>Set date</span></span><span>${icon('clock')}<span data-release-time>Set time</span></span></button><small class="small" data-release-text>Not set · Philippine time. You can save without it; it is needed to open the race.</small></div>
+        <div class="field">${lbl('tag','RFID tag expiry')}<div class="schedule-form-pair"><select name="nfc_expiry_days" aria-label="RFID tag expiry"><option value="">No expiry</option><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="5">5 days</option><option value="7">7 days</option><option value="14">14 days</option><option value="custom">Custom…</option></select><input name="nfc_expiry_custom" type="number" min="1" max="365" step="1" inputmode="numeric" placeholder="Days" aria-label="RFID tag expiry in days" hidden></div><p class="schedule-info">${icon('info')}From release. Then RFID tags stop clocking.</p></div>
+        <label class="schedule-practice schedule-showup"><input type="checkbox" name="requires_show_up" checked><span><strong>Show up needed</strong> Clocked pigeons must be brought to the club before the race closes, or they are disqualified.</span>${PIGEON}</label>
+        <label class="schedule-practice"><input type="checkbox" name="is_practice"><span><strong>Practice race</strong> A test race to try readers and phones. It never appears in the public results.</span>${RACEFLAG}</label>
+        <div class="schedule-form-actions"><button class="button primary schedule-save" type="submit" data-save-schedule>${icon('save')}<span data-save-label>Save schedule</span></button><button class="button secondary" type="button" data-cancel-editor>Cancel</button><button class="button danger-button" type="button" data-delete-race hidden>Delete race</button></div>
       </form>
     </aside>
   </div>`;
@@ -92,7 +102,7 @@ export async function render(view) {
   };
   function openEditor(race,{inDialog=false}={}){
     selectedId=race?.id??null;form.reset();
-    title.textContent=race?'Edit schedule':'Create schedule';saveButton.textContent=race?'Save changes':'Create schedule';view.querySelector('[data-delete-race]').hidden=!race;
+    title.textContent=race?'Race information':'Create schedule';saveButton.querySelector('[data-save-label]').textContent=race?'Save schedule':'Create schedule';view.querySelector('[data-delete-race]').hidden=!race;
     const locked=Boolean(race&&pigeonCount(race.id));form.elements.race_point_id.disabled=locked;pointNote.hidden=!locked;
     if(race){
       form.elements.name.value=race.name||'';
@@ -101,7 +111,7 @@ export async function render(view) {
       const [date='',time='']=utcToPhDateTimeLocal(race.release_at_utc).split('T');releaseDateInput.value=date;releaseTimeInput.value=time;
     }
     if(!race){setExpiry(null);releaseDateInput.value='';releaseTimeInput.value='';}// hidden fields are not cleared by reset()
-    drawDetails(race);validateDateRange();showRelease();
+    drawDetails(race);validateDateRange();showRelease();showStatus();
     if(inDialog){if(!openDateInput.value){openDateInput.value=today;endDateInput.value=today;}return;}
     if(dialog?.open)dialog.close();
     editor.hidden=false;layout.classList.add('has-editor');drawRows();
@@ -162,9 +172,14 @@ export async function render(view) {
   const releaseText=view.querySelector('[data-release-text]'),releaseDialog=view.querySelector('[data-release-dialog]'),releaseForm=view.querySelector('[data-release-form]');
   function showRelease(){
     const at=releaseDateInput.value&&releaseTimeInput.value?phDateTimeLocalToUtc(`${releaseDateInput.value}T${releaseTimeInput.value}`):null;
-    releaseText.textContent=at?formatDate(at):'Not set';releaseText.classList.toggle('is-unset',!at);
-    view.querySelector('[data-apply-release]').textContent=at?'Change release date & time':'Apply release date & time';
+    const box=view.querySelector('[data-apply-release]'),local=at?new Date(new Date(`${String(at).replace(' ','T')}Z`).getTime()):null;
+    box.querySelector('[data-release-date]').textContent=local?local.toLocaleDateString('en-PH',{timeZone:'Asia/Manila',year:'numeric',month:'short',day:'numeric'}):'Set date';
+    box.querySelector('[data-release-time]').textContent=local?local.toLocaleTimeString('en-PH',{timeZone:'Asia/Manila',hour:'numeric',minute:'2-digit'}):'Set time';
+    box.classList.toggle('is-unset',!at);box.setAttribute('aria-label',at?`Change release date & time (${formatDate(at)})`:'Apply release date & time');
+    releaseText.textContent=at?`Philippine time · ${formatDate(at)}`:'Not set · Philippine time. You can save without it; it is needed to open the race.';
   }
+  const statusField=view.querySelector('[data-status-field]'),showStatus=()=>{statusField.dataset.status=form.elements.status.value;};
+  form.elements.status.addEventListener('change',showStatus);
   const savedRace=()=>!dialog.open&&races.find(item=>item.id===selectedId);
   const applyRelease=async(date,time)=>{
     const race=savedRace();

@@ -1659,3 +1659,44 @@ html{overflow-x:hidden}
 .release-dialog h3{margin:0 0 2px;font:600 17px var(--font)}
 .release-dialog .form-actions{margin-top:14px}
 @media (max-width:720px){.release-dialog .form-actions .button{flex:1 1 30%;min-width:0}.schedule-release-row .button{flex:1 1 100%}}
+/* Race schedules form (design): section bar, label icons, release box, cards, big save */
+.schedule-editor{overflow:hidden;border-radius:16px}
+.schedule-editor .schedule-editor-head,.schedule-dialog .schedule-editor-head{gap:10px;justify-content:flex-start;background:var(--green);color:#fff;border-bottom:0}
+.schedule-editor-head h3{flex:1;margin:0;color:#fff;font:700 16px/1.3 var(--font)}
+.schedule-head-icon{width:22px;height:22px;flex:none}
+.schedule-editor-head .schedule-editor-close{color:#fff}
+.schedule-editor-head .schedule-editor-close:hover{background:#ffffff1f}
+.schedule-form .field-label{display:inline-flex;align-items:center;gap:7px;color:var(--ink);font-size:14px;font-weight:700}
+.schedule-form .field-icon{width:19px;height:19px;flex:none;color:var(--green)}
+.schedule-form .field-required{color:#e11d48;font-weight:700;margin-left:1px}
+.schedule-form .field input,.schedule-form .field select{min-height:48px;border-radius:12px;border-color:#d4dce8;font-size:15px}
+.schedule-status{position:relative}
+.schedule-status select{padding-left:32px}
+.schedule-status-dot{position:absolute;left:13px;bottom:20px;width:10px;height:10px;border-radius:50%;background:#94a3b8;pointer-events:none}
+.schedule-status[data-status=draft] .schedule-status-dot{background:#f59e0b}
+.schedule-status[data-status=open] .schedule-status-dot{background:#16a34a}
+.schedule-status[data-status=closed] .schedule-status-dot{background:#dc2626}
+.schedule-release-box{display:grid;grid-template-columns:1fr 1fr;width:100%;min-height:48px;padding:0;border:1px solid #d4dce8;border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:15px;cursor:pointer;text-align:left}
+.schedule-release-box>span{display:flex;align-items:center;gap:10px;padding:0 14px}
+.schedule-release-box>span+span{border-left:1px solid #d4dce8}
+.schedule-release-box .field-icon{color:var(--green)}
+.schedule-release-box.is-unset{color:var(--muted)}
+.schedule-release-box:hover{border-color:var(--green)}
+.schedule-release-box:focus-visible{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #00345f1f}
+.schedule-info{display:flex;align-items:center;gap:8px;margin:6px 0 0;padding:9px 12px;border-radius:10px;background:#eef4fb;color:#334155;font-size:13px}
+.schedule-info .field-icon{width:18px;height:18px;color:#2563eb}
+.schedule-practice{position:relative;align-items:center;padding:14px 14px;border:1.5px solid #c4b5fd;border-style:solid;border-radius:14px;background:#f5f3ff}
+.schedule-practice>span{flex:1;padding-right:56px}
+.schedule-practice strong{display:block;font-size:15px;color:#4c1d95}
+.schedule-showup{border-color:#86d0a4;background:#effaf3}
+.schedule-showup strong{color:#166534}
+.schedule-practice input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:#16a34a}
+.schedule-practice:not(.schedule-showup) input[type=checkbox]{accent-color:#7c3aed}
+.schedule-card-art{position:absolute;right:12px;top:50%;width:46px;height:40px;transform:translateY(-50%);color:#7c3aed;opacity:.45;pointer-events:none}
+.schedule-showup .schedule-card-art{color:#16a34a;opacity:.4}
+.schedule-save{grid-column:1/-1;min-height:54px;border-radius:999px;background:linear-gradient(90deg,#ff7a00,#ff9a1f)!important;color:#fff;font-size:16px;font-weight:700;box-shadow:0 8px 20px -8px #ff6a0099}
+.schedule-save .field-icon{width:20px;height:20px;color:#fff}
+.schedule-save:hover{filter:brightness(1.04)}
+.schedule-release-box>span{gap:8px;padding:0 11px;white-space:nowrap;overflow:hidden}
+@media (max-width:420px){.schedule-release-box{font-size:14px}}
+.panel.schedule-editor{padding:0}
