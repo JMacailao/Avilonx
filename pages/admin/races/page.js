@@ -19,6 +19,12 @@ export async function render(view) {
     </div>
   </div>
   <dialog class="schedule-dialog" data-schedule-dialog aria-labelledby="schedule-dialog-title"><div class="schedule-editor-head"><h3 id="schedule-dialog-title">Create schedule</h3><button class="schedule-editor-close" type="button" data-close-dialog aria-label="Close">×</button></div><div data-dialog-body></div></dialog>
+  <dialog class="release-dialog" data-release-dialog aria-labelledby="release-dialog-title"><form method="dialog" data-release-form>
+    <h3 id="release-dialog-title">Official release</h3><p class="small" data-release-race></p>
+    <div class="schedule-form-pair"><label class="field"><span>Release date</span><input name="date" type="date" required></label><label class="field"><span>Release time</span><input name="time" type="time" required></label></div>
+    <p class="small">Philippine time.</p>
+    <div class="form-actions"><button class="button primary" type="submit" value="apply">Apply</button><button class="button secondary" type="button" data-release-clear>Clear</button><button class="button secondary" type="button" data-release-cancel>Cancel</button></div>
+  </form></dialog>
   <div class="schedule-layout" data-schedule-layout>
     <section class="panel schedule-list"><div class="table-scroll"><table><thead><tr><th>Race</th><th>Release point</th><th>Release time</th><th>Pigeons</th><th>Status</th></tr></thead><tbody data-schedule-rows></tbody></table></div></section>
     <aside class="panel schedule-editor" data-schedule-editor hidden>
@@ -29,7 +35,7 @@ export async function render(view) {
         <label class="field"><span>Release point</span><select name="race_point_id" required><option value="">Choose a location</option>${points.map(p=>`<option value="${p.id}">${escapeHTML(p.location)}${p.sector?` · ${escapeHTML(p.sector)}`:''}</option>`).join('')}</select><small class="small" data-point-note hidden>Locked (pigeons registered). Edit it on Race points.</small></label>
         <div class="schedule-form-pair"><label class="field"><span>Open date</span><input name="open_date" type="date" required></label><label class="field"><span>End date</span><input name="end_date" type="date" required></label></div>
         <div class="schedule-form-row"><label class="field"><span>Status</span><select name="status">${STATUSES.map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label><label class="field schedule-lap"><span>Lap</span><input name="lap" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="e.g. 1"></label></div>
-        <div class="field"><span>Official release</span><div class="schedule-form-pair"><input name="release_date" type="date" aria-label="Official release date"><input name="release_time" type="time" aria-label="Official release time"></div><small class="small">Philippine time. Needed to open the race.</small></div>
+        <div class="field schedule-release"><span>Official release</span><input name="release_date" type="hidden"><input name="release_time" type="hidden"><div class="schedule-release-row"><strong data-release-text>Not set</strong><button class="button secondary" type="button" data-apply-release>Apply release date &amp; time</button></div><small class="small">Philippine time. You can save the schedule without it; it is needed to open the race.</small></div>
         <div class="field"><span>RFID tag expiry</span><div class="schedule-form-pair"><select name="nfc_expiry_days" aria-label="RFID tag expiry"><option value="">No expiry</option><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="5">5 days</option><option value="7">7 days</option><option value="14">14 days</option><option value="custom">Custom…</option></select><input name="nfc_expiry_custom" type="number" min="1" max="365" step="1" inputmode="numeric" placeholder="Days" aria-label="RFID tag expiry in days" hidden></div><small class="small">From release. Then RFID tags stop clocking.</small></div>
         <label class="schedule-practice schedule-showup"><input type="checkbox" name="requires_show_up" checked><span><strong>Show up needed</strong> Clocked pigeons must be brought to the club before the race closes, or they are disqualified.</span></label>
         <label class="schedule-practice"><input type="checkbox" name="is_practice"><span><strong>Practice race</strong> A test race to try readers and phones. It never appears in the public results.</span></label>
@@ -94,8 +100,8 @@ export async function render(view) {
       openDateInput.value=race.open_date||'';endDateInput.value=race.end_date||'';form.elements.status.value=race.status||'draft';form.elements.is_practice.checked=Boolean(race.is_practice);form.elements.requires_show_up.checked=race.requires_show_up!==false;form.elements.lap.value=race.lap??'';setExpiry(race.nfc_expiry_days);
       const [date='',time='']=utcToPhDateTimeLocal(race.release_at_utc).split('T');releaseDateInput.value=date;releaseTimeInput.value=time;
     }
-    if(!race)setExpiry(null);
-    drawDetails(race);validateDateRange();
+    if(!race){setExpiry(null);releaseDateInput.value='';releaseTimeInput.value='';}// hidden fields are not cleared by reset()
+    drawDetails(race);validateDateRange();showRelease();
     if(inDialog){if(!openDateInput.value){openDateInput.value=today;endDateInput.value=today;}return;}
     if(dialog?.open)dialog.close();
     editor.hidden=false;layout.classList.add('has-editor');drawRows();
@@ -120,10 +126,10 @@ export async function render(view) {
     event.preventDefault();
     if(!validateDateRange()){endDateInput.reportValidity();return;}
     const race=races.find(item=>item.id===selectedId),status=form.elements.status.value;
-    if(Boolean(releaseDateInput.value)!==Boolean(releaseTimeInput.value)){message('Enter both the official release date and time, or leave both blank.','error');(releaseDateInput.value?releaseTimeInput:releaseDateInput).focus();return;}
+    if(Boolean(releaseDateInput.value)!==Boolean(releaseTimeInput.value)){message('Enter both the official release date and time, or leave both blank.','error');view.querySelector('[data-apply-release]').focus();return;}
     const releaseAt=releaseDateInput.value?phDateTimeLocalToUtc(`${releaseDateInput.value}T${releaseTimeInput.value}`):null;
     if(releaseDateInput.value&&!releaseAt){message('Enter a valid release date and time.','error');return;}
-    if(status==='open'&&!releaseAt){message('Add the official release date and time before opening this race.','error');releaseDateInput.focus();return;}
+    if(status==='open'&&!releaseAt){message('Press Apply release date & time before opening this race.','error');view.querySelector('[data-apply-release]').focus();return;}
     const record={name:form.elements.name.value.trim(),open_date:openDateInput.value,end_date:endDateInput.value,status,release_at_utc:releaseAt};
     const expiryDays=expirySelect.value==='custom'?Number(expiryCustom.value):expirySelect.value?Number(expirySelect.value):null;
     if(expirySelect.value==='custom'&&!(Number.isInteger(expiryDays)&&expiryDays>=1&&expiryDays<=365)){message('Enter the RFID tag expiry in days (1 to 365).','error');expiryCustom.focus();return;}
@@ -150,6 +156,38 @@ export async function render(view) {
     if(dialog.open)dialog.close();
     message(race?'Schedule saved.':'Schedule created.','success');window.dispatchEvent(new Event('app:refresh'));
   };
+
+  // Official release: shown as text; "Apply release date & time" opens a pop-up.
+  // For a saved race it is saved right away; for a new one, with Create schedule.
+  const releaseText=view.querySelector('[data-release-text]'),releaseDialog=view.querySelector('[data-release-dialog]'),releaseForm=view.querySelector('[data-release-form]');
+  function showRelease(){
+    const at=releaseDateInput.value&&releaseTimeInput.value?phDateTimeLocalToUtc(`${releaseDateInput.value}T${releaseTimeInput.value}`):null;
+    releaseText.textContent=at?formatDate(at):'Not set';releaseText.classList.toggle('is-unset',!at);
+    view.querySelector('[data-apply-release]').textContent=at?'Change release date & time':'Apply release date & time';
+  }
+  const savedRace=()=>!dialog.open&&races.find(item=>item.id===selectedId);
+  const applyRelease=async(date,time)=>{
+    const race=savedRace();
+    if(race){
+      const releaseAt=date?phDateTimeLocalToUtc(`${date}T${time}`):null;
+      if(date&&!releaseAt){message('Enter a valid release date and time.','error');return false;}
+      if(!releaseAt&&race.status==='open'){message('An open race needs its release time. Set the status to Draft or Closed first.','error');return false;}
+      const {error:releaseError}=await supabase.from('races').update({release_at_utc:releaseAt}).eq('id',race.id);
+      if(releaseError){message(dbError(releaseError),'error');return false;}
+      race.release_at_utc=releaseAt;
+      message(releaseAt?`Release applied: ${formatDate(releaseAt)}.`:'Release date and time cleared.','success');window.dispatchEvent(new Event('app:refresh'));
+    }
+    releaseDateInput.value=date;releaseTimeInput.value=time;showRelease();return true;
+  };
+  view.querySelector('[data-apply-release]').onclick=()=>{
+    const race=savedRace()||races.find(item=>item.id===selectedId);
+    view.querySelector('[data-release-race]').textContent=form.elements.name.value.trim()||race?.name||'New race';
+    releaseForm.elements.date.value=releaseDateInput.value||openDateInput.value||today;releaseForm.elements.time.value=releaseTimeInput.value||'';
+    releaseDialog.showModal();(releaseForm.elements.time.value?releaseForm.elements.date:releaseForm.elements.time).focus();
+  };
+  releaseForm.onsubmit=async event=>{event.preventDefault();const {date,time}=releaseForm.elements;if(!date.value||!time.value){(date.value?time:date).reportValidity();return;}if(await applyRelease(date.value,time.value))releaseDialog.close();};
+  view.querySelector('[data-release-clear]').onclick=async()=>{if(await applyRelease('',''))releaseDialog.close();};
+  view.querySelector('[data-release-cancel]').onclick=()=>releaseDialog.close();
 
   // Delete a race: one without pigeons any time; one with pigeons only 6 months
   // after its race day (its entries and clockings go with it; billing stays).

@@ -1650,3 +1650,12 @@ th{color:#55657a}
 html{overflow-x:hidden}
 @supports (overflow-x:clip){html,body{overflow-x:clip}}
 .table-scroll,.entries-tab-bar,.entry-tab-bar,.clock-tab-bar,[role=tablist]{overscroll-behavior-x:contain}
+/* Race schedules: official release shown as text, set in a pop-up */
+.schedule-release-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;min-height:var(--target)}
+.schedule-release-row strong{flex:1 1 140px;font-size:14px}
+.schedule-release-row strong.is-unset{color:var(--muted);font-weight:500}
+.release-dialog{width:min(420px,calc(100vw - 24px));padding:20px;border:0;border-radius:14px;box-shadow:0 20px 60px #0f172a59}
+.release-dialog::backdrop{background:#1e293b99}
+.release-dialog h3{margin:0 0 2px;font:600 17px var(--font)}
+.release-dialog .form-actions{margin-top:14px}
+@media (max-width:720px){.release-dialog .form-actions .button{flex:1 1 30%;min-width:0}.schedule-release-row .button{flex:1 1 100%}}
